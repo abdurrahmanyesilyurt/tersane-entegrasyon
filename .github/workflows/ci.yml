@@ -94,8 +94,9 @@ jobs:
         run: |
           for i in $(seq 1 60); do
             logs=$(docker compose logs oracle --no-color)
-            if echo "$logs" | grep -q "ALL ORACLE CHECKS PASSED"; then echo "$logs" | grep -E "^oracle-1  \| (ok|→|ALL)"; exit 0; fi
-            if echo "$logs" | grep -qE "TEST FAILED|ORA-[0-9]+|SP2-[0-9]+"; then echo "$logs" | tail -80; exit 1; fi
+            if echo "$logs" | grep -q "ALL ORACLE CHECKS PASSED"; then echo "$logs" | grep -E "^oracle-1  \| (ok|→|ALL)" || true; exit 0; fi
+            # Only real error lines ("ORA-06512: …" at the start of a log line), not test names that mention ORA-20404.
+            if echo "$logs" | grep -qE "TEST FAILED|\| (ORA|SP2)-[0-9]+:"; then echo "$logs" | tail -80; exit 1; fi
             sleep 5
           done
           docker compose logs oracle --no-color | tail -80
