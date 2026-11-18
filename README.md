@@ -20,9 +20,10 @@ ekranına ise irsaliye satırlarını bir RPA botu Excel'den girer.
 | **Entegrasyon** | .NET BackgroundService: transactional outbox, idempotency, Polly (retry + circuit breaker + timeout), entegrasyon log tablosu, arayüzden yeniden işleme, watermark ile delta senkron |
 | **RPA** | Playwright for .NET + ClosedXML: Excel'den okur, eski jQuery formuna girer, ekran görüntüsü + log + sonuç Excel'i üretir |
 | **Eski sistem** | Bilerek eski tip bir form (tablo düzeni, `.aspx` adresler, `alert/confirm`, yavaş AJAX), ADO.NET ile SQL Server |
+| **React panel (opsiyonel)** | Vite + React 19 + TypeScript + TanStack Query: canlı KPI'lar, son 60 dakikanın ERP çağrı grafiği (SVG), outbox listesi ([src/tersane-panel](src/tersane-panel)) |
 | **PL/SQL (opsiyonel)** | Aynı outbox yordamlarının Oracle paketi: `FOR UPDATE SKIP LOCKED`, `BULK COLLECT/FORALL`, `MERGE`, virtual column; Oracle Free container'ında testli ([db/oracle](db/oracle)) |
 | **Kalite** | 36 .NET testi: xUnit v3 + Testcontainers (gerçek SQL Server 2022), in-memory sahte ERP, headless Chromium ile RPA uçtan uca; 15 PL/SQL testi |
-| **Çalıştırma** | `docker compose up` (5 servis + migration işi; RPA ve Oracle isteğe bağlı profil), GitHub Actions CI (build + test + compose smoke test + RPA + PL/SQL) |
+| **Çalıştırma** | `docker compose up` (5 servis + migration işi; RPA, React panel ve Oracle isteğe bağlı profil), GitHub Actions CI (build + test + compose smoke test + RPA + panel build + PL/SQL) |
 
 ## Mimari
 
@@ -120,6 +121,14 @@ Uçtan uca duman testi (Git Bash veya Linux/macOS; CI de bunu çalıştırır):
 ./scripts/smoke.sh
 ```
 
+React izleme paneli (http://localhost:5104, `/api` çağrılarını nginx web uygulamasına yönlendirir):
+
+```powershell
+docker compose --profile panel up -d --build panel
+```
+
+Geliştirme modunda: `cd src/tersane-panel; npm install; npm run dev` → http://localhost:5173 (Vite, `/api` proxy'si `localhost:5100`'e).
+
 PL/SQL örneği (Oracle Database Free; şema, paket ve testler ilk açılışta çalışır, logda `ALL ORACLE CHECKS PASSED`):
 
 ```powershell
@@ -129,7 +138,7 @@ docker compose --profile oracle up -d oracle
 Durdurmak (veritabanı dahil her şeyi silmek için `-v`):
 
 ```powershell
-docker compose --profile rpa --profile oracle down -v
+docker compose --profile rpa --profile oracle --profile panel down -v
 ```
 
 ### Docker olmadan (geliştirme)
@@ -251,6 +260,7 @@ src/
   Tersane.ErpMock/      Sahte ERP (OData projection tarzı) + demo ekranı
   Tersane.EskiAmbar/    Eski tip ambar giriş formu (Razor Pages, jQuery, ADO.NET)
   Tersane.Rpa/          RPA botu (Playwright, ClosedXML) + Dockerfile
+  tersane-panel/        React (Vite + TypeScript) izleme paneli, nginx Dockerfile
 tests/Tersane.Tests/    xUnit v3 + Testcontainers
 db/oracle/              PL/SQL paketi (spec + body), şema, testler; compose "oracle" profili
 samples/                ornek-irsaliye.xlsx (RPA girdisi)
@@ -270,6 +280,8 @@ docs/                   görüşme notları, ekran görüntüleri
 | `vw_StockStatus`: eldeki, ERP rezervi, kullanılabilir, siparişte | Sahte ERP ekranı (açıkça "mock" etiketli) |
 | ![Eski ambar formu](docs/images/09-eski-ambar-formu.png) | ![RPA reddi](docs/images/12-rpa-red.png) |
 | RPA'nın hedefi: eski tip ambar giriş formu | Botun kaydettiği red: eski sistemde olmayan malzeme kodu |
+| ![React panel](docs/images/13-react-panel.png) | |
+| React izleme paneli: %40 hata oranında 503'ler grafikte, mesajlar yine ilk denemede işlenmiş (Polly) | |
 
 ## Bilinen sınırlamalar
 

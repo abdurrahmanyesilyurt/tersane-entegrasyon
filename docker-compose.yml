@@ -5,6 +5,7 @@
 #   SQL Server ............... localhost,14333          (sa / MSSQL_SA_PASSWORD)
 # RPA botu (isteğe bağlı profil):  docker compose --profile rpa run --rm rpa
 # PL/SQL örneği (isteğe bağlı):      docker compose --profile oracle up -d oracle
+# React izleme paneli (isteğe bağlı): docker compose --profile panel up -d panel  → http://localhost:5104
 #
 # Parolalar demo değerleridir; .env dosyasıyla değiştirilebilir (MSSQL_SA_PASSWORD, ERP_CLIENT_SECRET).
 
@@ -106,6 +107,17 @@ services:
       - ./rpa-out:/app/rpa-out
     depends_on:
       eski-ambar: { condition: service_started }
+
+  # Optional: React (Vite) monitoring panel → http://localhost:5104
+  panel:
+    profiles: ["panel"]
+    image: tersane/panel:dev
+    build:
+      context: src/tersane-panel
+    ports:
+      - "5104:80"
+    depends_on:
+      web: { condition: service_started }
 
   # Optional: the PL/SQL version of the outbox procedures (db/oracle), with its tests.
   #   docker compose --profile oracle up -d oracle   →  docker compose logs -f oracle

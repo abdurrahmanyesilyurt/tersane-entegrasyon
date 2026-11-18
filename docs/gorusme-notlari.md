@@ -14,6 +14,8 @@ docker compose up -d
 - VS Code'da şu dosyaları açık tut: `src/Tersane.Data/Sql/04_MaterialRequestProcedures.sql`, `05_OutboxProcedures.sql`,
   `src/Tersane.Worker/Outbox/OutboxProcessor.cs`, `src/Tersane.Worker/IntegrationSetup.cs`, `src/Tersane.Rpa/AmbarBot.cs`.
 - RPA'yı göstereceksen bir kez önceden çalıştır (imaj hazır olsun): `docker compose --profile rpa run --rm rpa`.
+- React paneli ve PL/SQL örneği isteğe bağlı: `docker compose --profile panel up -d panel` (`localhost:5104`),
+  `docker compose --profile oracle up -d oracle` (Oracle ilk açılışta testleri çalıştırır, ~1 dk).
 - Görüşmeden sonra: `docker compose --profile rpa down` (veriyi de silmek için `-v`).
 
 ## 1. 30 saniyelik açılış
@@ -51,7 +53,7 @@ docker compose up -d
 | **ASP.NET / ASP.NET Core** | 3 web uygulaması (MVC, Razor Pages, OData + Minimal API) + Worker | Üretimde ASP.NET Core 8 ile katmanlı Web API'lar yazıyorum. .NET Framework ile stajda iç uygulamalar geliştirdim. |
 | **MVC** | `Tersane.Web`: controller'lar, Razor view'lar, tag helper'lar, view component, partial, model binding, anti-forgery | Ekranların hepsi sunucu tarafında render; jQuery yalnızca etkileşim için. |
 | **Entity Framework** | EF Core 10: migration'lar, keyless entity (view), `HasDbFunction` (TVF), rowversion, `ExecuteUpdate`, `SqlQuery`, computed column | "Ne zaman EF, ne zaman saklı yordam" sorusuna hazırım (§6). |
-| **React** | Projede yok; üretimde Next.js + React + TanStack Query | "React tarafını üretimde her gün kullanıyorum; bu projede ilanın vurguladığı MVC + jQuery'yi öne aldım." |
+| **React** | [`src/tersane-panel`](../src/tersane-panel): Vite + React 19 + TypeScript + TanStack Query izleme paneli; üretimde Next.js + React | "Panel salt okunur: veriyi MVC'nin JSON uçlarından 5 sn'de bir çekiyor. 'Yeniden işle' gibi aksiyonları anti-forgery korumalı MVC ekranında bıraktım." |
 | **jQuery** | Bağımlı açılır listeler, dinamik form satırları + unobtrusive validation yeniden parse, AJAX + anti-forgery header, polling, eski formda `alert/confirm` | `wwwroot/js/material-request.js` ve `site.js`. |
 | **CSS** | CSS değişkenleriyle tema, Grid/Flexbox düzen, durum rozetleri, responsive, print | Bootstrap'in üstüne kendi temam (`site.css`). Eski form bilerek eski görünümde. |
 | **OOP** | Typed `ErpClient`, `DelegatingHandler`'lar (token, audit), `BackgroundService`, `IFisRepository` (SQL / in-memory), hata sınıflandırma (`ErpFailureKind`) | Arayüz arkasına alınan repository sayesinde eski sistem testte bellekte çalışıyor. |
@@ -230,5 +232,7 @@ docker compose ps                            # durum
 docker compose logs worker -f                # worker logu
 docker compose --profile rpa run --rm rpa    # RPA botu
 dotnet test                                  # 36 test (Docker açık olmalı)
-docker compose --profile rpa down -v         # her şeyi sil
+docker compose --profile oracle up -d oracle # PL/SQL örneği + testleri
+docker compose --profile panel up -d panel   # React panel → localhost:5104
+docker compose --profile rpa --profile oracle --profile panel down -v   # her şeyi sil
 ```
