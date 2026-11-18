@@ -6,18 +6,21 @@ Bu notlar projeyi kendi ağzından anlatabilmen için. Cümleler kısa tutuldu, 
 
 ```powershell
 cd C:\Users\HP\source\repos\tersane-entegrasyon
+docker compose --profile rpa --profile panel --profile oracle down -v
 docker compose up -d
 ```
 
-- Tarayıcıda dört sekme aç: `localhost:5100` (pano), `localhost:5100/entegrasyon`, `localhost:5101` (sahte ERP), `localhost:5102` (eski ambar).
+- **Temiz başla (önerilen).** Sahte ERP verisini bellekte tutar; yeniden başlayınca eski talepler ERP tarafında yok olur ve
+  iç sistemde sonsuza kadar "ERP'ye iletildi"de kalır, panoda da eski 503 hataları görünür. `down -v` SQL volume'unu siler,
+  `up -d` şemayı ve demo verisini (proje, blok, iş emri) yeniden kurar; pano "Henüz talep yok" ile açılır. ~30 sn sürer.
+- Tarayıcıda dört sekme aç: `localhost:5100` (pano), `localhost:5100/entegrasyon`, `localhost:5101` (sahte ERP), `localhost:5102` (eski ambar;
+  giriş `rpa.bot` / `Demo-Bot-2026`, demo değeri).
 - Entegrasyon sayfasında ERP kesintisi **kapalı**, hata oranı **%0** olsun.
 - VS Code'da şu dosyaları açık tut: `src/Tersane.Data/Sql/04_MaterialRequestProcedures.sql`, `05_OutboxProcedures.sql`,
   `src/Tersane.Worker/Outbox/OutboxProcessor.cs`, `src/Tersane.Worker/IntegrationSetup.cs`, `src/Tersane.Rpa/AmbarBot.cs`.
 - RPA'yı göstereceksen bir kez önceden çalıştır (imaj hazır olsun): `docker compose --profile rpa run --rm rpa`.
 - React paneli ve PL/SQL örneği isteğe bağlı: `docker compose --profile panel up -d panel` (`localhost:5104`),
   `docker compose --profile oracle up -d oracle` (Oracle ilk açılışta testleri çalıştırır, ~1 dk).
-- Veriler (SQL Server volume'u) korunur. Sahte ERP ise belleğinde tutar; yeniden başlayınca ERP tarafı sıfırlanır, numaraları
-  çakışmaz. Tamamen temiz başlamak istersen: `docker compose --profile rpa down -v` ve ardından `docker compose up -d`.
 - Görüşmeden sonra: `docker compose --profile rpa --profile oracle --profile panel stop`.
 
 ## 1. 30 saniyelik açılış
@@ -33,17 +36,26 @@ docker compose up -d
 
 1. **Pano** (`/`): açık talepler, kritik stok, hatalı ERP mesajı sayısı, senkron durumu. *"Destek ekibinin ilk bakacağı yer."*
 2. **Yeni malzeme talebi**: proje seç → bloklar ve iş emirleri AJAX ile gelir (jQuery). Kalem ekle: malzeme listesi ERP'den
-   senkronlanmış, yanında canlı stok. Miktara `12,5` yaz: virgüllü ondalık hem istemcide hem sunucuda tr-TR ile doğrulanıyor.
+   senkronlanmış, yanında canlı stok. Ondalığı metre/kg birimli bir kalemde göster (ör. `EL-CBL-3X25` kablo, `12,5` M; adet
+   birimli sacda "12,5 adet" tuhaf durur): virgüllü ondalık hem istemcide hem sunucuda tr-TR ile doğrulanıyor.
    **"Kaydet ve ERP'ye gönder"**.
 3. **Talep detayı**: adımlar, outbox mesajı, entegrasyon logu. Birkaç saniyede ERP numarası gelir. *"Gönder butonu bir saklı
    yordam çağırıyor; durum değişikliği ve outbox mesajı aynı transaction'da."*
 4. **Sahte ERP** (`:5101`): talep "Released" olarak görünür, "İlerlet" ile onaylanır. İç sistemde durum 10 sn içinde değişir
-   (delta senkron).
-5. **Hata senaryosu** (`/entegrasyon`): "ERP kesintisi"ni aç, yeni bir talep gönder. Logda 503'ler ve deneme numaraları görünür.
-   Kesintiyi kapat, mesaj kendiliğinden gider. Ya da `WL-E6013-32` ile kalıcı hata göster → **Hatalı** → "Yeniden işle".
+   (delta senkron). Simülasyon talebi kendiliğinden de ilerletir (20 sn'de Authorized, 40 sn'de Closed); sayfaya geç geçersen
+   "İlerlet" bir kez Closed'a götürür, stok artışı (ör. sac 16 → 20) talep detayında görünür.
+5. **Hata senaryosu** (`/entegrasyon`): "ERP kesintisi"ni aç ve birkaç saniye bekle: senkron çağrıları 503 alır, Polly 1-4
+   numaralı denemeleri yapar, sonra **devre kesici açılır**. Yeni bir talep gönder: ERP'ye hiç çağrı yapılmadan kuyrukta bekler
+   ("devre kesici açık", sonraki deneme 15 → 30 sn). Kesintiyi kapat; bir sonraki denemede mesaj kendiliğinden gider (provada
+   3/5. denemede gitti). Kalıcı hata: `WL-E6013-32` ile talep → tek denemede **Hatalı** (400 tekrar denenmez) → sahte ERP'de
+   malzeme kartında "Aç" → talepte "Yeniden işle" → işlenir.
+   *İpucu:* sahte ERP her 45 sn'de bir üretim tüketimi simüle eder, logda `Sync.ErpStock` bilgi satırları birikir. Hataları
+   göstermek için log filtresini "Hata"ya al ya da talep detayındaki kendi logunu göster.
 6. **Kod** (zaman kalırsa): `usp_Outbox_Claim` (READPAST), `OutboxProcessor.SendMaterialRequestAsync` (idempotency),
    `IntegrationSetup` (Polly).
-7. **RPA**: `docker compose --profile rpa run --rm rpa` → `rpa-out/…/sonuc.xlsx` ve `screenshots/`. Eski formu ekranda göster.
+7. **RPA**: `docker compose --profile rpa run --rm rpa` (~25 sn; 7 başarılı, 1 mükerrer, 1 red, 1 Excel hatası) →
+   `rpa-out/…/sonuc.xlsx` ve `screenshots/`. Eski formda "Fiş Listesi"nde botun girdiği fişler görünür. İkinci kez çalıştırırsan
+   satırlar "zaten kayıtlı" olur: bot idempotent.
 
 ## 3. İlan maddesi → projedeki karşılığı
 

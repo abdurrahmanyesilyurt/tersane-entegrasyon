@@ -85,7 +85,7 @@
     </div>
 </section>
 
-<section class="grid grid-3-1">
+<section class="grid grid-3-1 stack-below-xl">
     <div class="card-x">
         <header>
             <h2>Entegrasyon logu <small class="text-muted fw-normal">(integration.IntegrationLogs)</small></h2>
@@ -104,13 +104,12 @@
     <div class="card-x">
         <h2>Senkronizasyon durumları</h2>
         <table class="table-x">
-            <thead><tr><th>Akış</th><th>Watermark</th><th>Son başarılı</th></tr></thead>
+            <thead><tr><th>Akış / watermark</th><th>Son başarılı</th></tr></thead>
             <tbody>
             @foreach (var s in Model.SyncStates)
             {
                 <tr>
-                    <td class="mono">@s.Name</td>
-                    <td class="mono small">@Ui.Local(s.Watermark, "HH:mm:ss")</td>
+                    <td><div class="mono">@s.Name</div><div class="mono small text-muted">@Ui.Local(s.Watermark, "HH:mm:ss")</div></td>
                     <td>@if (s.LastError is null) { <span class="pill st-ok">@Ui.Ago(s.LastSuccessAt)</span> } else { <span class="pill st-err" title="@s.LastError">hata</span><div class="small text-danger">@s.LastError</div> }</td>
                 </tr>
             }

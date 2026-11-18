@@ -131,7 +131,12 @@ body {
 .grid { display: grid; gap: 1rem; }
 .grid-kpi { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
 .grid-2 { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
-.grid-3-1 { grid-template-columns: 3fr minmax(280px, 1fr); }
+/* minmax(0, …) + min-width: 0 let the wide column shrink: a long table scrolls inside its .table-wrap
+   instead of pushing the side card off the page on 1366/1536 px laptop screens. */
+.grid-3-1 { grid-template-columns: minmax(0, 3fr) minmax(320px, 1fr); }
+.grid > * { min-width: 0; }
+/* The integration log needs ~820 px; below 1500 px the side card moves under it instead of squeezing it. */
+@media (max-width: 1500px) { .grid-3-1.stack-below-xl { grid-template-columns: minmax(0, 1fr); } }
 
 .kpi { position: relative; overflow: hidden; }
 .kpi .label { color: var(--steel-500); font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }

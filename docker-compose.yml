@@ -34,7 +34,7 @@ services:
   # One-shot: EF Core migrations (tables + T-SQL procedures/views) and demo data, then exits.
   db-migrate:
     image: tersane/web:dev
-    build:
+    build: &web-build
       context: .
       args: { APP: Web }
     command: ["--migrate"]
@@ -71,6 +71,8 @@ services:
 
   web:
     image: tersane/web:dev
+    # Same image as db-migrate. Without its own build section, "up -d --build" rebuilt the image but kept the old web container.
+    build: *web-build
     environment:
       ConnectionStrings__Tersane: *db
       ErpMock__BaseUrl: http://erp-mock:8080/
