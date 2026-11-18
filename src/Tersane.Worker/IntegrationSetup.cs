@@ -59,9 +59,9 @@ public static class IntegrationSetup
                     .AddCircuitBreaker(new HttpCircuitBreakerStrategyOptions
                     {
                         FailureRatio = 0.5,
-                        MinimumThroughput = 8,
+                        MinimumThroughput = o.CircuitBreakerMinimumThroughput,
                         SamplingDuration = TimeSpan.FromSeconds(30),
-                        BreakDuration = TimeSpan.FromSeconds(15),
+                        BreakDuration = TimeSpan.FromSeconds(o.CircuitBreakerBreakSeconds),
                     })
                     .AddTimeout(TimeSpan.FromSeconds(o.AttemptTimeoutSeconds));
             });

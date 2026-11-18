@@ -19,6 +19,10 @@ public sealed class ErpOptions
     /// <summary>Wait as long as the ERP's Retry-After header says instead of the computed backoff.</summary>
     public bool HonourRetryAfter { get; set; } = true;
     public int AttemptTimeoutSeconds { get; set; } = 10;
+
+    /// <summary>Circuit breaker: stop calling a failing ERP for a while instead of hammering it.</summary>
+    public int CircuitBreakerMinimumThroughput { get; set; } = 8;
+    public int CircuitBreakerBreakSeconds { get; set; } = 15;
     public int TotalTimeoutSeconds { get; set; } = 60;
 }
 
