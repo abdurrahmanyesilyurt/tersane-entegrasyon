@@ -47,7 +47,7 @@ docker compose up -d
 |---|---|---|
 | **SQL** | Şema, index'ler (filtreli, unique), view'lar, CTE'ler | Üretimde PostgreSQL ile şema tasarımı ve sorgu optimizasyonu yaptım; burada aynı işleri SQL Server'da yaptım. |
 | **T-SQL** | 7 saklı yordam, 2 view, inline TVF, TVP tipi, sequence, `MERGE`, `OPENJSON`, `FOR JSON`, `TRY/CATCH`, `THROW`, `READPAST` | En çok burada zaman harcadım. `usp_MaterialRequest_Submit` ve `usp_Outbox_Claim` üzerinden anlatırım. |
-| **PL/SQL** | Projede yok (bkz. §7 kopya kağıdı) | "Deneyimim yok. T-SQL'de yaptığım her şeyin Oracle karşılığını çıkardım: `FOR UPDATE SKIP LOCKED`, `RAISE_APPLICATION_ERROR`, paketler, `BULK COLLECT/FORALL`." |
+| **PL/SQL** | [`db/oracle`](../db/oracle): aynı outbox mantığının PL/SQL paketi (spec + body), Oracle Free container'ında 15 test + iki oturumlu `SKIP LOCKED` testi | "Üretimde PL/SQL yazmadım. Farkları görmek için T-SQL yordamlarımın karşılığını Oracle'da yazdım: paket, `FOR UPDATE SKIP LOCKED`, `BULK COLLECT/FORALL`, `RAISE_APPLICATION_ERROR`, virtual column." |
 | **ASP.NET / ASP.NET Core** | 3 web uygulaması (MVC, Razor Pages, OData + Minimal API) + Worker | Üretimde ASP.NET Core 8 ile katmanlı Web API'lar yazıyorum. .NET Framework ile stajda iç uygulamalar geliştirdim. |
 | **MVC** | `Tersane.Web`: controller'lar, Razor view'lar, tag helper'lar, view component, partial, model binding, anti-forgery | Ekranların hepsi sunucu tarafında render; jQuery yalnızca etkileşim için. |
 | **Entity Framework** | EF Core 10: migration'lar, keyless entity (view), `HasDbFunction` (TVF), rowversion, `ExecuteUpdate`, `SqlQuery`, computed column | "Ne zaman EF, ne zaman saklı yordam" sorusuna hazırım (§6). |
@@ -66,8 +66,9 @@ docker compose up -d
 
 - **IFS:** "Kullanmadım. Projede taklit ettiğim şey yalnızca API tarzı. İlk haftalarda IFS'in veri modelini ve entegrasyon
   yöntemlerini öğrenmem gerekecek. Entegrasyonun temel sorunlarını ise biliyorum ve çözebiliyorum."
-- **PL/SQL:** "Yazmadım. SQL ve T-SQL bilgim aktarılabilir. Farkları listeledim (§7). En önemli iki fark: Oracle'da boş string
-  NULL'dır ve okuyucular yazanları bloklamaz (MVCC)."
+- **PL/SQL:** "Üretimde yazmadım. Bu projede T-SQL yordamlarımın PL/SQL karşılığını yazdım ve Oracle Free'de test ettim
+  (`db/oracle`). En önemli farklar: paket yapısı, transaction'ın çağırana ait olması, boş string'in NULL olması ve okuyucuların
+  yazanları bloklamaması (MVCC)."
 - **T-SQL:** "Az kullanmıştım, bu projede yoğun çalıştım. Saklı yordamları baştan sona kendim anlatabilirim."
 - **RPA araçları:** "UiPath kullanmadım. Web için kod tabanlı otomasyon yazdım; masaüstü uygulamalar için UiPath veya
   Power Automate Desktop gerekir, onu öğrenirim."

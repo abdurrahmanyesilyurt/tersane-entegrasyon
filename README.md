@@ -20,8 +20,9 @@ ekranına ise irsaliye satırlarını bir RPA botu Excel'den girer.
 | **Entegrasyon** | .NET BackgroundService: transactional outbox, idempotency, Polly (retry + circuit breaker + timeout), entegrasyon log tablosu, arayüzden yeniden işleme, watermark ile delta senkron |
 | **RPA** | Playwright for .NET + ClosedXML: Excel'den okur, eski jQuery formuna girer, ekran görüntüsü + log + sonuç Excel'i üretir |
 | **Eski sistem** | Bilerek eski tip bir form (tablo düzeni, `.aspx` adresler, `alert/confirm`, yavaş AJAX), ADO.NET ile SQL Server |
-| **Kalite** | 36 test: xUnit v3 + Testcontainers (gerçek SQL Server 2022), in-memory sahte ERP, headless Chromium ile RPA uçtan uca |
-| **Çalıştırma** | `docker compose up` (7 servis), GitHub Actions CI (build + test + compose smoke test + RPA) |
+| **PL/SQL (opsiyonel)** | Aynı outbox yordamlarının Oracle paketi: `FOR UPDATE SKIP LOCKED`, `BULK COLLECT/FORALL`, `MERGE`, virtual column; Oracle Free container'ında testli ([db/oracle](db/oracle)) |
+| **Kalite** | 36 .NET testi: xUnit v3 + Testcontainers (gerçek SQL Server 2022), in-memory sahte ERP, headless Chromium ile RPA uçtan uca; 15 PL/SQL testi |
+| **Çalıştırma** | `docker compose up` (5 servis + migration işi; RPA ve Oracle isteğe bağlı profil), GitHub Actions CI (build + test + compose smoke test + RPA + PL/SQL) |
 
 ## Mimari
 
@@ -119,10 +120,16 @@ Uçtan uca duman testi (Git Bash veya Linux/macOS; CI de bunu çalıştırır):
 ./scripts/smoke.sh
 ```
 
+PL/SQL örneği (Oracle Database Free; şema, paket ve testler ilk açılışta çalışır, logda `ALL ORACLE CHECKS PASSED`):
+
+```powershell
+docker compose --profile oracle up -d oracle
+```
+
 Durdurmak (veritabanı dahil her şeyi silmek için `-v`):
 
 ```powershell
-docker compose --profile rpa down -v
+docker compose --profile rpa --profile oracle down -v
 ```
 
 ### Docker olmadan (geliştirme)
@@ -245,6 +252,7 @@ src/
   Tersane.EskiAmbar/    Eski tip ambar giriş formu (Razor Pages, jQuery, ADO.NET)
   Tersane.Rpa/          RPA botu (Playwright, ClosedXML) + Dockerfile
 tests/Tersane.Tests/    xUnit v3 + Testcontainers
+db/oracle/              PL/SQL paketi (spec + body), şema, testler; compose "oracle" profili
 samples/                ornek-irsaliye.xlsx (RPA girdisi)
 scripts/smoke.sh        compose üzerinde uçtan uca duman testi
 docs/                   görüşme notları, ekran görüntüleri

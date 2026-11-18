@@ -4,6 +4,7 @@
 #   Eski ambar formu ......... http://localhost:5102   (kullanıcı: rpa.bot / Demo-Bot-2026)
 #   SQL Server ............... localhost,14333          (sa / MSSQL_SA_PASSWORD)
 # RPA botu (isteğe bağlı profil):  docker compose --profile rpa run --rm rpa
+# PL/SQL örneği (isteğe bağlı):      docker compose --profile oracle up -d oracle
 #
 # Parolalar demo değerleridir; .env dosyasıyla değiştirilebilir (MSSQL_SA_PASSWORD, ERP_CLIENT_SECRET).
 
@@ -105,6 +106,27 @@ services:
       - ./rpa-out:/app/rpa-out
     depends_on:
       eski-ambar: { condition: service_started }
+
+  # Optional: the PL/SQL version of the outbox procedures (db/oracle), with its tests.
+  #   docker compose --profile oracle up -d oracle   →  docker compose logs -f oracle
+  oracle:
+    profiles: ["oracle"]
+    image: gvenzl/oracle-free:23-slim-faststart
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:-Tersane_Demo_2026}
+      APP_USER: tersane
+      APP_USER_PASSWORD: ${ORACLE_APP_PASSWORD:-Tersane_Demo_2026}
+    ports:
+      - "15210:1521"
+    volumes:
+      - ./db/oracle/init:/container-entrypoint-initdb.d:ro
+      - ./db/oracle/sql:/opt/tersane-sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
 
 volumes:
   sqldata:

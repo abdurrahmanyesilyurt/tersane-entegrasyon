@@ -66,3 +66,24 @@ jobs:
       - name: Stop
         if: always()
         run: docker compose --profile rpa down -v
+
+  oracle:
+    name: PL/SQL package on Oracle Database Free
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start Oracle Free (schema, package and tests run on first start)
+        run: docker compose --profile oracle up -d oracle
+      - name: Wait for the init scripts and check the result
+        run: |
+          for i in $(seq 1 60); do
+            logs=$(docker compose logs oracle --no-color)
+            if echo "$logs" | grep -q "ALL ORACLE CHECKS PASSED"; then echo "$logs" | grep -E "^oracle-1  \| (ok|→|ALL)"; exit 0; fi
+            if echo "$logs" | grep -qE "TEST FAILED|ORA-[0-9]+|SP2-[0-9]+"; then echo "$logs" | tail -80; exit 1; fi
+            sleep 5
+          done
+          docker compose logs oracle --no-color | tail -80
+          exit 1
+      - name: Stop
+        if: always()
+        run: docker compose --profile oracle down -v
