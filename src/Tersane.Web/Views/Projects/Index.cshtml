@@ -1,0 +1,29 @@
+@model List<Project>
+@{
+    ViewData["Title"] = "Projeler";
+}
+
+<div class="grid grid-2">
+@foreach (var p in Model)
+{
+    var openWo = p.WorkOrders.Count(w => w.Status is WorkOrderStatus.Open or WorkOrderStatus.InProgress);
+    var erected = p.Blocks.Count(b => b.Status == BlockStatus.Erected);
+    var percent = p.Blocks.Count == 0 ? 0 : erected * 100 / p.Blocks.Count;
+    <article class="card-x">
+        <header>
+            <h2><a href="/projeler/@p.Id" class="text-decoration-none">@p.HullNo · @p.Name</a></h2>
+            @Html.Pill(Ui.Status(p.Status))
+        </header>
+        <dl class="facts mb-3">
+            <dt>Gemi tipi</dt><dd>@p.ShipType</dd>
+            <dt>Armatör</dt><dd>@p.Owner</dd>
+            <dt>Başlangıç / teslim</dt><dd>@Ui.Date(p.StartDate) → @Ui.Date(p.PlannedDelivery)</dd>
+            <dt>Blok / açık iş emri</dt><dd>@p.Blocks.Count blok · @openWo iş emri</dd>
+        </dl>
+        <div class="small text-muted mb-1">Kızağa alınan blok: @erected / @p.Blocks.Count</div>
+        <div class="progress" role="progressbar" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100" style="height:8px">
+            <div class="progress-bar" style="width:@percent%; background: var(--ok)"></div>
+        </div>
+    </article>
+}
+</div>

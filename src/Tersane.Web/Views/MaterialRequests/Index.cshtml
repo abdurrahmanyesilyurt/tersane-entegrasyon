@@ -1,0 +1,54 @@
+@model MaterialRequestListVm
+@{
+    ViewData["Title"] = "Malzeme Talepleri";
+}
+
+<form method="get" class="toolbar">
+    <input type="search" name="q" value="@Model.Search" class="form-control form-control-sm w-auto" placeholder="Talep no, tekne no, ERP no…" />
+    <select name="status" class="form-select form-select-sm w-auto js-autosubmit">
+        <option value="">Tüm durumlar</option>
+        @foreach (var s in Enum.GetValues<MaterialRequestStatus>())
+        {
+            <option value="@s" selected="@(Model.Status == s)">@Ui.Status(s).Label</option>
+        }
+    </select>
+    <button class="btn btn-sm btn-outline-secondary">Ara</button>
+    <span class="spacer"></span>
+    <a class="btn btn-sm btn-signal" href="/malzeme-talepleri/yeni">+ Yeni talep</a>
+</form>
+
+<div class="card-x">
+    <div class="table-wrap">
+        <table class="table-x">
+            <thead>
+                <tr><th>Talep no</th><th>Proje</th><th>Blok / iş emri</th><th class="num">Kalem</th><th>İhtiyaç</th><th>Talep eden</th><th>ERP no</th><th>Durum</th><th></th></tr>
+            </thead>
+            <tbody>
+            @foreach (var r in Model.Items)
+            {
+                <tr class="@(r.Status == MaterialRequestStatus.Failed ? "row-err" : "")" data-id="@r.Id">
+                    <td><a class="mono" href="/malzeme-talepleri/@r.Id">@r.No</a></td>
+                    <td>@r.Project?.HullNo</td>
+                    <td class="mono">@(r.Block?.Code ?? "—") @(r.WorkOrder is null ? "" : "/ " + r.WorkOrder.No)</td>
+                    <td class="num">@r.Lines.Count</td>
+                    <td>@Ui.Date(r.NeedDate)</td>
+                    <td>@r.RequestedBy</td>
+                    <td class="mono">@(r.ErpRequisitionNo ?? "—")</td>
+                    <td class="js-status">@Html.Pill(Ui.Status(r.Status))</td>
+                    <td class="text-end">
+                        @if (r.Status == MaterialRequestStatus.Draft)
+                        {
+                            <button type="button" class="btn btn-sm btn-signal js-submit" data-url="/malzeme-talepleri/@r.Id/gonder" data-no="@r.No">ERP'ye gönder</button>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="9" class="empty">Kayıt yok.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+@Html.AntiForgeryToken()

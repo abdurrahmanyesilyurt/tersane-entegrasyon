@@ -1,0 +1,87 @@
+@model ProjectDetailVm
+@{
+    var p = Model.Project;
+    ViewData["Title"] = $"{p.HullNo} · {p.Name}";
+    ViewData["Crumb"] = "<a href=\"/projeler\">Projeler</a> /";
+}
+
+<div class="toolbar">
+    @Html.Pill(Ui.Status(p.Status))
+    <span class="text-muted">@p.ShipType · @p.Owner · teslim @Ui.Date(p.PlannedDelivery)</span>
+    <span class="spacer"></span>
+    <a class="btn btn-sm btn-outline-secondary" href="/is-emirleri/yeni?projectId=@p.Id">+ İş emri</a>
+    <a class="btn btn-sm btn-signal" href="/malzeme-talepleri/yeni?projectId=@p.Id">+ Malzeme talebi</a>
+</div>
+
+<div class="grid grid-2 mb-3">
+    <div class="card-x">
+        <h2>Bloklar</h2>
+        <table class="table-x">
+            <thead><tr><th>Kod</th><th>Blok</th><th>Bölge</th><th class="num">Ağırlık (t)</th><th>Durum</th></tr></thead>
+            <tbody>
+            @foreach (var b in p.Blocks)
+            {
+                <tr><td class="mono">@b.Code</td><td>@b.Name</td><td>@b.Zone</td><td class="num">@Ui.Qty(b.WeightTon)</td><td>@Html.Pill(Ui.Status(b.Status))</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card-x">
+        <h2>Malzeme ihtiyacı özeti <small class="text-muted fw-normal">(dbo.fn_ProjectMaterialSummary)</small></h2>
+        <div class="table-wrap">
+            <table class="table-x">
+                <thead><tr><th>Malzeme</th><th class="num">Talep</th><th class="num">Açık</th><th class="num">Teslim</th></tr></thead>
+                <tbody>
+                @foreach (var m in Model.MaterialSummary)
+                {
+                    <tr>
+                        <td><span class="mono">@m.PartNo</span><br /><small class="text-muted">@m.Description</small></td>
+                        <td class="num">@Ui.Qty(m.QtyRequested) @m.Unit</td>
+                        <td class="num">@Ui.Qty(m.QtyOpen)</td>
+                        <td class="num">@Ui.Qty(m.QtyReceived)</td>
+                    </tr>
+                }
+                @if (Model.MaterialSummary.Count == 0)
+                {
+                    <tr><td colspan="4" class="empty">Bu proje için gönderilmiş talep yok.</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card-x mb-3">
+    <h2>İş emirleri</h2>
+    <table class="table-x">
+        <thead><tr><th>No</th><th>İş</th><th>Blok</th><th>Bölüm</th><th>Plan</th><th class="num">Adam-saat</th><th>Durum</th></tr></thead>
+        <tbody>
+        @foreach (var w in p.WorkOrders)
+        {
+            <tr>
+                <td class="mono">@w.No</td><td>@w.Title</td><td class="mono">@(w.Block?.Code ?? "—")</td><td>@w.Department</td>
+                <td>@Ui.Date(w.PlannedStart) – @Ui.Date(w.PlannedEnd)</td><td class="num">@Ui.Qty(w.EstimatedManHours)</td>
+                <td>@Html.Pill(Ui.Status(w.Status))</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<div class="card-x">
+    <h2>Son malzeme talepleri</h2>
+    <table class="table-x">
+        <thead><tr><th>Talep no</th><th>İhtiyaç</th><th>ERP no</th><th>Durum</th></tr></thead>
+        <tbody>
+        @foreach (var r in Model.Requests)
+        {
+            <tr><td><a class="mono" href="/malzeme-talepleri/@r.Id">@r.No</a></td><td>@Ui.Date(r.NeedDate)</td><td class="mono">@(r.ErpRequisitionNo ?? "—")</td><td>@Html.Pill(Ui.Status(r.Status))</td></tr>
+        }
+        @if (Model.Requests.Count == 0)
+        {
+            <tr><td colspan="4" class="empty">Talep yok.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>

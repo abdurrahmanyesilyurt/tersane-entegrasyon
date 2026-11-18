@@ -1,0 +1,119 @@
+@model MaterialRequestInput
+@{
+    ViewData["Title"] = "Yeni Malzeme Talebi";
+    ViewData["Crumb"] = "<a href=\"/malzeme-talepleri\">Malzeme Talepleri</a> /";
+}
+
+<form method="post" id="request-form" novalidate>
+    <div asp-validation-summary="ModelOnly" class="mb-2"></div>
+
+    <section class="card-x mb-3">
+        <h2>Talep bilgileri</h2>
+        <div class="form-grid">
+            <div>
+                <label asp-for="ProjectId" class="form-label"></label>
+                <select asp-for="ProjectId" asp-items="(Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewBag.Projects" class="form-select js-project">
+                    <option value="">Seçiniz…</option>
+                </select>
+                <span asp-validation-for="ProjectId"></span>
+            </div>
+            <div>
+                <label asp-for="BlockId" class="form-label"></label>
+                <select asp-for="BlockId" class="form-select js-blocks" data-selected="@Model.BlockId">
+                    <option value="">(projeye bağlı)</option>
+                </select>
+            </div>
+            <div>
+                <label asp-for="WorkOrderId" class="form-label"></label>
+                <select asp-for="WorkOrderId" class="form-select js-workorders" data-selected="@Model.WorkOrderId">
+                    <option value="">(isteğe bağlı)</option>
+                </select>
+            </div>
+            <div>
+                <label asp-for="NeedDate" class="form-label"></label>
+                <input asp-for="NeedDate" type="date" class="form-control" />
+                <span asp-validation-for="NeedDate"></span>
+            </div>
+            <div style="grid-column: 1 / -1">
+                <label asp-for="Note" class="form-label"></label>
+                <input asp-for="Note" class="form-control" placeholder="örn. Panel hattı için acil, kesim planı ekte" />
+            </div>
+        </div>
+    </section>
+
+    <section class="card-x mb-3">
+        <header>
+            <h2>Malzeme kalemleri</h2>
+            <button type="button" class="btn btn-sm btn-outline-secondary js-add-line">+ Kalem ekle</button>
+        </header>
+        <table class="table-x lines">
+            <thead><tr><th style="width:3rem">#</th><th>Malzeme (ERP katalogu)</th><th style="width:11rem">Miktar</th><th>Not</th><th style="width:3rem"></th></tr></thead>
+            <tbody id="lines">
+            @for (var i = 0; i < Model.Lines.Count; i++)
+            {
+                <tr class="line">
+                    <td class="line-no">@(i + 1)</td>
+                    <td>
+                        <select name="Lines[@i].MaterialId" class="form-select js-material" data-selected="@Model.Lines[i].MaterialId"
+                                data-val="true" data-val-required="Malzeme seçiniz.">
+                            <option value="">Malzeme seçiniz…</option>
+                        </select>
+                        <span class="stock-hint"></span>
+                        <span class="field-validation-valid" data-valmsg-for="Lines[@i].MaterialId" data-valmsg-replace="true"></span>
+                    </td>
+                    <td>
+                        <div class="input-group">
+                            <input name="Lines[@i].Quantity" value="@Model.Lines[i].Quantity" class="form-control text-end" inputmode="decimal" placeholder="örn. 12,5"
+                                   data-val="true" data-val-required="Miktar giriniz." data-val-number="Geçerli bir sayı giriniz."
+                                   data-val-range="Miktar 0'dan büyük olmalı." data-val-range-min="0.001" data-val-range-max="1000000" />
+                            <span class="input-group-text unit">—</span>
+                        </div>
+                        <span class="field-validation-valid" data-valmsg-for="Lines[@i].Quantity" data-valmsg-replace="true"></span>
+                    </td>
+                    <td><input name="Lines[@i].Note" value="@Model.Lines[i].Note" class="form-control" maxlength="200" /></td>
+                    <td><button type="button" class="btn btn-sm btn-link text-danger js-remove-line" title="Kalemi sil">✕</button></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        <p class="small text-muted mt-2 mb-0">
+            Malzeme listesi ve stok bilgisi ERP'den (mock) senkronize edilir; <strong>kullanılabilir</strong> = eldeki − ERP rezervi.
+            Ondalık ayırıcı virgüldür (12,5).
+        </p>
+    </section>
+
+    <div class="d-flex flex-wrap gap-2">
+        <button type="submit" name="submitNow" value="false" class="btn btn-outline-secondary">Taslak kaydet</button>
+        <button type="submit" name="submitNow" value="true" class="btn btn-signal">Kaydet ve ERP'ye gönder</button>
+        <a href="/malzeme-talepleri" class="btn btn-link">Vazgeç</a>
+    </div>
+</form>
+
+<template id="line-template">
+    <tr class="line">
+        <td class="line-no"></td>
+        <td>
+            <select data-name="MaterialId" class="form-select js-material" data-val="true" data-val-required="Malzeme seçiniz.">
+                <option value="">Malzeme seçiniz…</option>
+            </select>
+            <span class="stock-hint"></span>
+            <span class="field-validation-valid" data-valmsg-for="MaterialId" data-valmsg-replace="true"></span>
+        </td>
+        <td>
+            <div class="input-group">
+                <input data-name="Quantity" class="form-control text-end" inputmode="decimal" placeholder="örn. 12,5"
+                       data-val="true" data-val-required="Miktar giriniz." data-val-number="Geçerli bir sayı giriniz."
+                       data-val-range="Miktar 0'dan büyük olmalı." data-val-range-min="0.001" data-val-range-max="1000000" />
+                <span class="input-group-text unit">—</span>
+            </div>
+            <span class="field-validation-valid" data-valmsg-for="Quantity" data-valmsg-replace="true"></span>
+        </td>
+        <td><input data-name="Note" class="form-control" maxlength="200" /></td>
+        <td><button type="button" class="btn btn-sm btn-link text-danger js-remove-line" title="Kalemi sil">✕</button></td>
+    </tr>
+</template>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/material-request.js" asp-append-version="true"></script>
+}

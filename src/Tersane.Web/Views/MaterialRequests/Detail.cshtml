@@ -1,0 +1,128 @@
+@model MaterialRequestDetailVm
+@{
+    var r = Model.Request;
+    ViewData["Title"] = $"Malzeme Talebi {r.No}";
+    ViewData["Crumb"] = "<a href=\"/malzeme-talepleri\">Malzeme Talepleri</a> /";
+
+    // Life cycle shown as steps; Failed and Rejected are drawn on the step where they happened.
+    var steps = new[] { "Taslak", "ERP kuyruğunda", "ERP'ye iletildi", "ERP'de onaylandı", "Ambara girdi" };
+    var current = r.Status switch
+    {
+        MaterialRequestStatus.Draft => 0,
+        MaterialRequestStatus.Submitted or MaterialRequestStatus.Failed => 1,
+        MaterialRequestStatus.SentToErp => 2,
+        MaterialRequestStatus.ApprovedInErp or MaterialRequestStatus.Rejected => 3,
+        _ => 5,
+    };
+    var failed = r.Status is MaterialRequestStatus.Failed or MaterialRequestStatus.Rejected;
+    var failedMessage = Model.Messages.LastOrDefault(m => m.Status == OutboxStatus.Failed);
+}
+
+<div class="toolbar">
+    <span class="js-status">@Html.Pill(Ui.Status(r.Status))</span>
+    @if (r.ErpRequisitionNo is not null)
+    {
+        <span>ERP satınalma talebi: <strong class="mono">@r.ErpRequisitionNo</strong> <small class="text-muted">(@r.ErpState)</small></span>
+    }
+    <span class="spacer"></span>
+    @if (r.Status == MaterialRequestStatus.Draft)
+    {
+        <button type="button" class="btn btn-signal js-submit" data-url="/malzeme-talepleri/@r.Id/gonder" data-no="@r.No" data-reload="true">Onayla ve ERP'ye gönder</button>
+    }
+    @if (failedMessage is not null)
+    {
+        <button type="button" class="btn btn-navy js-requeue" data-url="/entegrasyon/mesajlar/@failedMessage.MessageId/yeniden-isle" data-reload="true">Yeniden işle</button>
+    }
+    @if (r.Status is MaterialRequestStatus.Submitted or MaterialRequestStatus.SentToErp or MaterialRequestStatus.ApprovedInErp)
+    {
+        <span class="small text-muted"><span class="live-dot"></span>ERP durumu otomatik izleniyor</span>
+    }
+</div>
+
+<ol class="steps card-x">
+    @for (var i = 0; i < steps.Length; i++)
+    {
+        var css = i < current ? "done" : i == current ? (failed ? "failed" : "current") : "";
+        <li class="@css">@(i == current && failed ? Ui.Status(r.Status).Label : steps[i])</li>
+    }
+</ol>
+
+@if (failedMessage is not null)
+{
+    <div class="flash-msg flash-err">
+        <strong>Entegrasyon hatası:</strong> @failedMessage.LastError
+        <div class="small mt-1">Sorun giderildikten sonra (örn. ERP tekrar erişilebilir olduğunda) "Yeniden işle" ile mesaj kuyruğa geri alınır.</div>
+    </div>
+}
+
+<div class="grid grid-3-1 mb-3">
+    <div class="card-x">
+        <h2>Kalemler</h2>
+        <table class="table-x">
+            <thead><tr><th>#</th><th>Malzeme</th><th class="num">Miktar</th><th class="num">Kullanılabilir stok</th><th>Not</th></tr></thead>
+            <tbody>
+            @foreach (var l in r.Lines)
+            {
+                Model.Stock.TryGetValue(l.MaterialId, out var s);
+                <tr>
+                    <td>@l.LineNo</td>
+                    <td><span class="mono">@l.Material?.PartNo</span><br /><small class="text-muted">@l.Material?.Description</small>
+                        @if (l.Material?.IsBlockedInErp == true) { <br /><span class="pill st-err">ERP'de satınalmaya kapalı</span> }</td>
+                    <td class="num">@Ui.Qty(l.Quantity) @l.Unit</td>
+                    <td class="num">@(s is null ? "—" : Ui.Qty(s.QtyAvailable)) @if (s is not null) { @Html.Pill(Ui.StockLevel(s.StockLevel)) }</td>
+                    <td>@l.Note</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-x">
+        <h2>Bilgiler</h2>
+        <dl class="facts">
+            <dt>Proje</dt><dd><a href="/projeler/@r.ProjectId">@r.Project?.HullNo</a></dd>
+            <dt>Blok</dt><dd>@(r.Block is null ? "—" : $"{r.Block.Code} {r.Block.Name}")</dd>
+            <dt>İş emri</dt><dd>@(r.WorkOrder?.No ?? "—")</dd>
+            <dt>İhtiyaç</dt><dd>@Ui.Date(r.NeedDate)</dd>
+            <dt>Talep eden</dt><dd>@r.RequestedBy</dd>
+            <dt>Oluşturma</dt><dd>@Ui.Local(r.CreatedAt, "dd.MM.yyyy HH:mm")</dd>
+            <dt>Gönderim</dt><dd>@Ui.Local(r.SubmittedAt, "dd.MM.yyyy HH:mm")</dd>
+            @if (r.Note is not null) { <dt>Açıklama</dt><dd>@r.Note</dd> }
+        </dl>
+    </div>
+</div>
+
+<div class="card-x mb-3">
+    <h2>Outbox mesajları</h2>
+    <table class="table-x">
+        <thead><tr><th>Mesaj</th><th>İdempotency anahtarı</th><th>Durum</th><th class="num">Deneme</th><th>Sonraki deneme</th><th>ERP no</th><th>Son hata</th></tr></thead>
+        <tbody>
+        @foreach (var m in Model.Messages)
+        {
+            <tr class="@(m.Status == OutboxStatus.Failed ? "row-err" : "")">
+                <td class="mono" title="@m.MessageId">@m.MessageId.ToString()[..8]…</td>
+                <td class="mono">@m.IdempotencyKey</td>
+                <td>@Html.Pill(Ui.Status(m.Status))</td>
+                <td class="num">@m.AttemptCount / @m.MaxAttempts</td>
+                <td>@(m.Status == OutboxStatus.Pending ? Ui.Local(m.NextAttemptAt, "HH:mm:ss") : "—")</td>
+                <td class="mono">@(m.ExternalRef ?? "—")</td>
+                <td class="small">@m.LastError</td>
+            </tr>
+        }
+        @if (Model.Messages.Count == 0)
+        {
+            <tr><td colspan="7" class="empty">Talep henüz ERP'ye gönderilmedi.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<div class="card-x">
+    <h2>Entegrasyon logu</h2>
+    <partial name="_LogTable" model="Model.Logs" />
+</div>
+@Html.AntiForgeryToken()
+@if (r.Status is MaterialRequestStatus.Submitted or MaterialRequestStatus.SentToErp or MaterialRequestStatus.ApprovedInErp)
+{
+    @* site.js reloads the page while the ERP is still working on the request *@
+    <div data-auto-refresh="6" hidden></div>
+}

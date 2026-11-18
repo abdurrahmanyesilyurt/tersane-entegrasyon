@@ -1,0 +1,127 @@
+@model IntegrationVm
+@{
+    ViewData["Title"] = "Entegrasyon İzleme";
+    var h = Model.Health;
+}
+
+<section class="grid grid-kpi mb-3" id="health">
+    <div class="card-x kpi"><div class="label">Kuyrukta</div><div class="value" data-k="pendingCount">@h.PendingCount</div><div class="hint">işleniyor: <span data-k="processingCount">@h.ProcessingCount</span></div></div>
+    <div class="card-x kpi @(h.FailedCount > 0 ? "is-err" : "is-ok")" id="kpi-failed"><div class="label">Hatalı</div><div class="value" data-k="failedCount">@h.FailedCount</div><div class="hint">arayüzden yeniden işlenebilir</div></div>
+    <div class="card-x kpi is-ok"><div class="label">Son 24 sa işlenen</div><div class="value" data-k="processedLast24h">@h.ProcessedLast24h</div><div class="hint">ERP'ye iletilen mesaj</div></div>
+    <div class="card-x kpi is-warn"><div class="label">Son 1 sa hata</div><div class="value" data-k="errorsLastHour">@h.ErrorsLastHour</div><div class="hint">HTTP denemeleri dahil</div></div>
+    <div class="card-x kpi"><div class="label">En eski bekleyen</div><div class="value"><span data-k="oldestPendingAgeSeconds">@(h.OldestPendingAgeSeconds?.ToString() ?? "—")</span><small class="fs-6"> sn</small></div><div class="hint"><span class="live-dot"></span>5 sn'de bir yenilenir</div></div>
+</section>
+
+<section class="card-x mb-3">
+    <header>
+        <h2>ERP simülasyonu <span class="erp-badge">DEMO</span></h2>
+        <a class="small" href="@Model.ErpMockUrl" target="_blank" rel="noopener">Sahte ERP ekranını aç ↗</a>
+    </header>
+    <form class="chaos" id="chaos-form">
+        <label class="switch"><input type="checkbox" class="form-check-input" name="outage" id="chaos-outage" /> ERP kesintisi (tüm çağrılar 503)</label>
+        <label class="d-inline-flex align-items-center gap-2">Rastgele hata oranı
+            <input type="range" class="form-range" style="width:140px" name="failureRate" id="chaos-rate" min="0" max="0.9" step="0.1" value="0" />
+            <output id="chaos-rate-out">%0</output>
+        </label>
+        <label class="d-inline-flex align-items-center gap-2">Gecikme
+            <select class="form-select form-select-sm w-auto" name="latencyMs" id="chaos-latency">
+                <option value="0">yok</option><option value="500">0,5 sn</option><option value="2000">2 sn</option><option value="12000">12 sn (zaman aşımı)</option>
+            </select>
+        </label>
+        <span class="small text-muted" id="chaos-status"></span>
+    </form>
+    <p class="small text-muted mb-0 mt-2">
+        Bu anahtarlar yalnızca sahte ERP'nin davranışını değiştirir. Worker önce Polly ile birkaç kez hızlı yeniden dener,
+        olmazsa mesajı kuyrukta bekletip artan aralıklarla tekrar dener; deneme hakkı bitince mesaj <strong>Hatalı</strong> olur.
+    </p>
+</section>
+
+<section class="card-x mb-3">
+    <header>
+        <h2>Outbox mesajları</h2>
+        <div class="d-flex gap-2 align-items-center">
+            <form method="get" class="d-flex gap-2">
+                <input type="hidden" name="level" value="@Model.Level" />
+                <select name="status" class="form-select form-select-sm w-auto js-autosubmit">
+                    <option value="">Tüm durumlar</option>
+                    @foreach (var s in Enum.GetValues<OutboxStatus>())
+                    {
+                        <option value="@s" selected="@(Model.Status == s)">@Ui.Status(s).Label</option>
+                    }
+                </select>
+            </form>
+            <button type="button" class="btn btn-sm btn-navy js-requeue" data-url="/entegrasyon/mesajlar/yeniden-isle" data-reload="true" @(h.FailedCount == 0 ? "disabled" : "")>Tüm hatalıları yeniden işle</button>
+        </div>
+    </header>
+    <div class="table-wrap">
+        <table class="table-x">
+            <thead><tr><th>Oluşma</th><th>Tip</th><th>İdempotency anahtarı</th><th>Durum</th><th class="num">Deneme</th><th>Sonraki deneme</th><th>ERP no</th><th>Son hata</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var m in Model.Messages)
+            {
+                <tr class="@(m.Status == OutboxStatus.Failed ? "row-err" : "")">
+                    <td class="mono">@Ui.Local(m.CreatedAt, "dd.MM HH:mm:ss")</td>
+                    <td class="mono">@m.MessageType</td>
+                    <td class="mono">@m.IdempotencyKey</td>
+                    <td class="js-status">@Html.Pill(Ui.Status(m.Status))</td>
+                    <td class="num">@m.AttemptCount / @m.MaxAttempts</td>
+                    <td class="mono">@(m.Status == OutboxStatus.Pending ? Ui.Local(m.NextAttemptAt, "HH:mm:ss") : "—")</td>
+                    <td class="mono">@(m.ExternalRef ?? "—")</td>
+                    <td class="small">@m.LastError</td>
+                    <td class="text-end">
+                        @if (m.Status == OutboxStatus.Failed)
+                        {
+                            <button type="button" class="btn btn-sm btn-navy js-requeue" data-url="/entegrasyon/mesajlar/@m.MessageId/yeniden-isle">Yeniden işle</button>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (Model.Messages.Count == 0)
+            {
+                <tr><td colspan="9" class="empty">Mesaj yok.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="grid grid-3-1">
+    <div class="card-x">
+        <header>
+            <h2>Entegrasyon logu <small class="text-muted fw-normal">(integration.IntegrationLogs)</small></h2>
+            <form method="get">
+                <input type="hidden" name="status" value="@Model.Status" />
+                <select name="level" class="form-select form-select-sm w-auto js-autosubmit">
+                    <option value="">Tüm seviyeler</option>
+                    <option value="Error" selected="@(Model.Level == "Error")">Hata</option>
+                    <option value="Warning" selected="@(Model.Level == "Warning")">Uyarı</option>
+                    <option value="Info" selected="@(Model.Level == "Info")">Bilgi</option>
+                </select>
+            </form>
+        </header>
+        <partial name="_LogTable" model="Model.Logs" />
+    </div>
+    <div class="card-x">
+        <h2>Senkronizasyon durumları</h2>
+        <table class="table-x">
+            <thead><tr><th>Akış</th><th>Watermark</th><th>Son başarılı</th></tr></thead>
+            <tbody>
+            @foreach (var s in Model.SyncStates)
+            {
+                <tr>
+                    <td class="mono">@s.Name</td>
+                    <td class="mono small">@Ui.Local(s.Watermark, "dd.MM HH:mm:ss")</td>
+                    <td>@if (s.LastError is null) { <span class="pill st-ok">@Ui.Ago(s.LastSuccessAt)</span> } else { <span class="pill st-err" title="@s.LastError">hata</span><div class="small text-danger">@s.LastError</div> }</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        <p class="small text-muted mt-2 mb-0">Delta senkron: ERP'den yalnızca <span class="mono">ChangedAt &gt; watermark</span> olan kayıtlar çekilir (OData <span class="mono">$filter</span> + <span class="mono">@@odata.nextLink</span> sayfalama).</p>
+    </div>
+</section>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script src="~/js/integration.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · Tersane İç Uygulama</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <a class="brand" href="/">
+            <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true">
+                <rect width="64" height="64" rx="12" fill="#e8710a" />
+                <path d="M10 38h44l-6 12H16z" fill="#fff" />
+                <path d="M22 36V22h12v14M34 28h10v8" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round" />
+                <path d="M28 22V12" stroke="#fff" stroke-width="3" />
+            </svg>
+            <span><strong>Tersane</strong><small>Üretim &amp; Entegrasyon</small></span>
+        </a>
+        <nav class="nav-side">
+            <a href="/" class="@Html.ActiveIf("/")">Pano</a>
+            <a href="/projeler" class="@Html.ActiveIf("/projeler")">Projeler</a>
+            <a href="/is-emirleri" class="@Html.ActiveIf("/is-emirleri")">İş Emirleri</a>
+            <a href="/malzeme-talepleri" class="@Html.ActiveIf("/malzeme-talepleri")">Malzeme Talepleri</a>
+            <a href="/stok" class="@Html.ActiveIf("/stok")">Stok</a>
+            <a href="/entegrasyon" class="@Html.ActiveIf("/entegrasyon")">Entegrasyon @await Component.InvokeAsync("IntegrationBadge")</a>
+        </nav>
+        <div class="sidebar-foot">
+            <b>Demo / portfolyo projesi.</b><br />
+            Veriler kurgusaldır. Bağlı ERP gerçek bir ürün değil, <b>sahte (mock)</b> bir OData servisidir.
+        </div>
+    </aside>
+
+    <main class="content">
+        <header class="topbar">
+            <div>
+                @if (ViewData["Crumb"] is string crumb) { <div class="crumb">@Html.Raw(crumb)</div> }
+                <h1>@ViewData["Title"]</h1>
+            </div>
+            <div class="user">Kullanıcı: <strong>demo.planlama</strong></div>
+        </header>
+
+        @if (TempData["Flash"] is string flash) { <div class="flash-msg flash-ok" role="status">@flash</div> }
+        @if (TempData["FlashError"] is string flashError) { <div class="flash-msg flash-err" role="alert">@flashError</div> }
+
+        @RenderBody()
+    </main>
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

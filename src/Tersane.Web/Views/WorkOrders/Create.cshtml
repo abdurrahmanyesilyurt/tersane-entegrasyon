@@ -1,0 +1,60 @@
+@model WorkOrderInput
+@{
+    ViewData["Title"] = "Yeni İş Emri";
+    ViewData["Crumb"] = "<a href=\"/is-emirleri\">İş Emirleri</a> /";
+}
+
+<form method="post" class="card-x" novalidate>
+    <div asp-validation-summary="ModelOnly" class="mb-2"></div>
+    <div class="form-grid">
+        <div>
+            <label asp-for="ProjectId" class="form-label"></label>
+            <select asp-for="ProjectId" asp-items="(Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewBag.Projects" class="form-select js-project">
+                <option value="">Seçiniz…</option>
+            </select>
+            <span asp-validation-for="ProjectId"></span>
+        </div>
+        <div>
+            <label asp-for="BlockId" class="form-label"></label>
+            <select asp-for="BlockId" class="form-select js-blocks" data-selected="@Model.BlockId">
+                <option value="">(projeye bağlı)</option>
+            </select>
+            <span asp-validation-for="BlockId"></span>
+        </div>
+        <div>
+            <label asp-for="Department" class="form-label"></label>
+            <select asp-for="Department" asp-items="(Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewBag.Departments" class="form-select">
+                <option value="">Seçiniz…</option>
+            </select>
+            <span asp-validation-for="Department"></span>
+        </div>
+        <div style="grid-column: 1 / -1">
+            <label asp-for="Title" class="form-label"></label>
+            <input asp-for="Title" class="form-control" placeholder="örn. S203 borda bloğu panel kaynağı" />
+            <span asp-validation-for="Title"></span>
+        </div>
+        <div>
+            <label asp-for="PlannedStart" class="form-label"></label>
+            <input asp-for="PlannedStart" type="date" class="form-control" />
+            <span asp-validation-for="PlannedStart"></span>
+        </div>
+        <div>
+            <label asp-for="PlannedEnd" class="form-label"></label>
+            <input asp-for="PlannedEnd" type="date" class="form-control" />
+            <span asp-validation-for="PlannedEnd"></span>
+        </div>
+        <div>
+            <label asp-for="EstimatedManHours" class="form-label"></label>
+            <input asp-for="EstimatedManHours" type="text" inputmode="decimal" class="form-control" />
+            <span asp-validation-for="EstimatedManHours"></span>
+        </div>
+    </div>
+    <div class="mt-3 d-flex gap-2">
+        <button type="submit" class="btn btn-signal">Kaydet</button>
+        <a href="/is-emirleri" class="btn btn-outline-secondary">Vazgeç</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

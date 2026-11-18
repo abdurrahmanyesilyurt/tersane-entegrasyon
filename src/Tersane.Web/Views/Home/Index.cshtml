@@ -1,0 +1,77 @@
+﻿@model DashboardVm
+@{
+    ViewData["Title"] = "Pano";
+    var h = Model.Health;
+}
+
+<section class="grid grid-kpi mb-3">
+    <div class="card-x kpi"><div class="label">Aktif proje</div><div class="value">@Model.ActiveProjects</div><div class="hint">imalat + planlama</div></div>
+    <div class="card-x kpi"><div class="label">Açık iş emri</div><div class="value">@Model.OpenWorkOrders</div><div class="hint">açık + devam eden</div></div>
+    <div class="card-x kpi is-warn"><div class="label">Açık malzeme talebi</div><div class="value">@Model.OpenRequests</div><div class="hint">ambara girene kadar</div></div>
+    <div class="card-x kpi @(Model.CriticalStockItems > 0 ? "is-warn" : "is-ok")"><div class="label">Kritik stok kalemi</div><div class="value">@Model.CriticalStockItems</div><div class="hint">emniyet stoğunun altında</div></div>
+    <div class="card-x kpi @(h.FailedCount > 0 ? "is-err" : "is-ok")"><div class="label">Hatalı ERP mesajı</div><div class="value">@h.FailedCount</div><div class="hint"><a href="/entegrasyon?status=Failed">yeniden işle →</a></div></div>
+    <div class="card-x kpi"><div class="label">Kuyrukta bekleyen</div><div class="value">@(h.PendingCount + h.ProcessingCount)</div><div class="hint">son 24 sa işlenen: @h.ProcessedLast24h</div></div>
+</section>
+
+<section class="grid grid-3-1">
+    <div class="card-x">
+        <header>
+            <h2>Son malzeme talepleri</h2>
+            <a class="btn btn-sm btn-signal" href="/malzeme-talepleri/yeni">+ Yeni talep</a>
+        </header>
+        <div class="table-wrap">
+            <table class="table-x">
+                <thead><tr><th>Talep no</th><th>Proje</th><th>İhtiyaç</th><th>ERP no</th><th>Durum</th></tr></thead>
+                <tbody>
+                @foreach (var r in Model.RecentRequests)
+                {
+                    <tr>
+                        <td><a class="mono" href="/malzeme-talepleri/@r.Id">@r.No</a></td>
+                        <td>@r.Project?.HullNo</td>
+                        <td>@Ui.Date(r.NeedDate)</td>
+                        <td class="mono">@(r.ErpRequisitionNo ?? "—")</td>
+                        <td>@Html.Pill(Ui.Status(r.Status))</td>
+                    </tr>
+                }
+                @if (Model.RecentRequests.Count == 0)
+                {
+                    <tr><td colspan="5" class="empty">Henüz talep yok. <a href="/malzeme-talepleri/yeni">İlk talebi oluşturun.</a></td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card-x">
+            <h2>ERP senkronizasyonu <span class="erp-badge">MOCK ERP</span></h2>
+            <table class="table-x">
+                <tbody>
+                @foreach (var s in Model.SyncStates)
+                {
+                    <tr>
+                        <td>@(s.Name switch { "ErpParts" => "Malzeme kartları", "ErpStock" => "Stok", _ => "Talep durumları" })</td>
+                        <td class="num">@if (s.LastError is null) { <span class="pill st-ok">@Ui.Ago(s.LastSuccessAt)</span> } else { <span class="pill st-err" title="@s.LastError">hata</span> }</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="card-x">
+            <h2>Son entegrasyon hataları</h2>
+            @if (Model.RecentErrors.Count == 0)
+            {
+                <p class="text-muted mb-0">Son kayıtlarda hata yok.</p>
+            }
+            else
+            {
+                <ul class="list-unstyled mb-0 small">
+                    @foreach (var e in Model.RecentErrors)
+                    {
+                        <li class="mb-2"><span class="text-muted">@Ui.Local(e.OccurredAt, "dd.MM HH:mm")</span> · <strong>@e.Operation</strong><br />@e.Message</li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</section>

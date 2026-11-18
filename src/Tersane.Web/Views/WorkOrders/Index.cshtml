@@ -1,0 +1,54 @@
+@model WorkOrderListVm
+@{
+    ViewData["Title"] = "İş Emirleri";
+}
+
+<form method="get" class="toolbar">
+    <select name="projectId" asp-items="Model.Projects" class="form-select form-select-sm w-auto js-autosubmit">
+        <option value="">Tüm projeler</option>
+    </select>
+    <select name="status" class="form-select form-select-sm w-auto js-autosubmit">
+        <option value="">Tüm durumlar</option>
+        @foreach (var s in Enum.GetValues<WorkOrderStatus>())
+        {
+            <option value="@s" selected="@(Model.Status == s)">@Ui.Status(s).Label</option>
+        }
+    </select>
+    <span class="spacer"></span>
+    <a class="btn btn-sm btn-signal" href="/is-emirleri/yeni@(Model.ProjectId is null ? "" : $"?projectId={Model.ProjectId}")">+ Yeni iş emri</a>
+</form>
+
+<div class="card-x">
+    <div class="table-wrap">
+        <table class="table-x">
+            <thead><tr><th>No</th><th>Proje</th><th>Blok</th><th>İş tanımı</th><th>Bölüm</th><th>Plan</th><th class="num">Adam-saat</th><th>Durum</th></tr></thead>
+            <tbody>
+            @foreach (var w in Model.Items)
+            {
+                <tr>
+                    <td class="mono">@w.No</td>
+                    <td><a href="/projeler/@w.ProjectId">@w.Project?.HullNo</a></td>
+                    <td class="mono">@(w.Block?.Code ?? "—")</td>
+                    <td>@w.Title</td>
+                    <td>@w.Department</td>
+                    <td>@Ui.Date(w.PlannedStart) – @Ui.Date(w.PlannedEnd)</td>
+                    <td class="num">@Ui.Qty(w.EstimatedManHours)</td>
+                    <td>
+                        <select class="form-select form-select-sm js-wo-status" data-id="@w.Id" aria-label="Durum">
+                            @foreach (var s in Enum.GetValues<WorkOrderStatus>())
+                            {
+                                <option value="@s" selected="@(w.Status == s)">@Ui.Status(s).Label</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+            }
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="8" class="empty">Filtreye uyan iş emri yok.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+@Html.AntiForgeryToken()

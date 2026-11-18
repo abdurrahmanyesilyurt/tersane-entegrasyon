@@ -1,0 +1,55 @@
+@model StockVm
+@{
+    ViewData["Title"] = "Stok Durumu";
+}
+
+<div class="toolbar">
+    <input type="search" class="form-control form-control-sm w-auto js-table-filter" data-target="#stock-table" placeholder="Malzeme ara…" />
+    <div class="btn-group btn-group-sm" role="group" aria-label="Seviye filtresi">
+        <button type="button" class="btn btn-outline-secondary active js-level" data-level="">Tümü</button>
+        <button type="button" class="btn btn-outline-secondary js-level" data-level="LOW">Kritik</button>
+        <button type="button" class="btn btn-outline-secondary js-level" data-level="OUT">Stok yok</button>
+    </div>
+    <span class="spacer"></span>
+    <span class="small text-muted">
+        <span class="live-dot"></span>ERP stok senkronu: @Ui.Ago(Model.StockSync?.LastSuccessAt) · malzeme kartları: @Ui.Ago(Model.PartsSync?.LastSuccessAt)
+        <span class="erp-badge ms-1">MOCK ERP</span>
+    </span>
+</div>
+
+<div class="card-x">
+    <div class="table-wrap">
+        <table class="table-x" id="stock-table">
+            <thead>
+                <tr>
+                    <th>Malzeme</th><th>Kategori</th><th class="num">Eldeki</th><th class="num">ERP rezervi</th><th class="num">Kullanılabilir</th>
+                    <th class="num">Emniyet stoğu</th><th class="num">Siparişte (açık talep)</th><th>Seviye</th><th>Son senkron</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var s in Model.Rows)
+            {
+                <tr data-level="@s.StockLevel">
+                    <td>
+                        <span class="mono">@s.PartNo</span><br /><small class="text-muted">@s.Description</small>
+                        @if (s.IsBlockedInErp) { <span class="pill st-err ms-1">satınalmaya kapalı</span> }
+                    </td>
+                    <td>@s.Category</td>
+                    <td class="num">@Ui.Qty(s.QtyOnHand) @s.Unit</td>
+                    <td class="num">@Ui.Qty(s.QtyReservedInErp)</td>
+                    <td class="num"><strong>@Ui.Qty(s.QtyAvailable)</strong></td>
+                    <td class="num">@Ui.Qty(s.SafetyStock)</td>
+                    <td class="num">@(s.QtyOnOrder == 0 ? "—" : Ui.Qty(s.QtyOnOrder))</td>
+                    <td>@Html.Pill(Ui.StockLevel(s.StockLevel))</td>
+                    <td class="small text-muted">@Ui.Local(s.LastSyncedAt, "dd.MM HH:mm:ss")</td>
+                </tr>
+            }
+            @if (Model.Rows.Count == 0)
+            {
+                <tr><td colspan="9" class="empty">Henüz ERP'den malzeme gelmedi. Entegrasyon servisinin çalıştığından emin olun.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <p class="small text-muted mt-2 mb-0">Kaynak: <span class="mono">dbo.vw_StockStatus</span> view'ı (ERP stoğu + iç sistemdeki açık talepler).</p>
+</div>
