@@ -1,0 +1,23 @@
+@page "/Giris.aspx"
+@model GirisModel
+@{
+    ViewData["Title"] = "Giriş";
+}
+<form method="post" class="login">
+    <fieldset>
+        <legend>Sisteme Giriş</legend>
+        <table class="form">
+            <tr><td class="lbl"><label for="txtKullaniciAdi">Kullanıcı Adı:</label></td><td><input type="text" id="txtKullaniciAdi" name="txtKullaniciAdi" value="@Model.KullaniciAdi" autocomplete="username" /></td></tr>
+            <tr><td class="lbl"><label for="txtSifre">Şifre:</label></td><td><input type="password" id="txtSifre" name="txtSifre" autocomplete="current-password" /></td></tr>
+            <tr><td></td><td><input type="submit" id="btnGiris" value="Giriş" class="btn" /></td></tr>
+        </table>
+        @if (Model.Hata is not null)
+        {
+            <div id="lblHata" class="err">@Model.Hata</div>
+        }
+        @if (Request.Query.ContainsKey("ReturnUrl"))
+        {
+            <div id="lblOturum" class="warn">Oturumunuz zaman aşımına uğradı. Lütfen tekrar giriş yapınız.</div>
+        }
+    </fieldset>
+</form>

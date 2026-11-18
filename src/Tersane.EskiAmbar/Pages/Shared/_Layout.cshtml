@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - Ambar Yönetim Sistemi</title>
+    <link rel="stylesheet" href="~/css/eski.css" />
+</head>
+<body>
+<table class="shell" cellpadding="0" cellspacing="0">
+    <tr>
+        <td class="header" colspan="2">
+            <span class="logo">AYS</span>
+            <b>AMBAR YÖNETİM SİSTEMİ</b> v2.3 <span class="small">(kurgusal demo)</span>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <span class="user">Kullanıcı: <b id="lblKullanici">@User.Identity.Name</b> | <a href="/Cikis.aspx">Çıkış</a></span>
+            }
+        </td>
+    </tr>
+    <tr>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <td class="menu">
+                <div class="menu-title">MENÜ</div>
+                <a href="/AmbarGiris.aspx">» Ambar Giriş Fişi</a>
+                <a href="/FisListesi.aspx">» Fiş Listesi</a>
+                <span class="disabled">» Ambar Çıkış Fişi</span>
+                <span class="disabled">» Sayım</span>
+                <span class="disabled">» Raporlar</span>
+            </td>
+        }
+        <td class="body">
+            @RenderBody()
+        </td>
+    </tr>
+    <tr>
+        <td class="footer" colspan="2">© Bilgi İşlem — En iyi 1024x768 çözünürlükte görüntülenir. Bu sistem demo amaçlıdır; veriler kurgusaldır.</td>
+    </tr>
+</table>
+<script src="~/js/jquery.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

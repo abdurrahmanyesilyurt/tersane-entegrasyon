@@ -1,0 +1,89 @@
+@page "/AmbarGiris.aspx"
+@model AmbarGirisModel
+@{
+    ViewData["Title"] = "Ambar Giriş Fişi";
+}
+<h2 class="page-title">AMBAR GİRİŞ FİŞİ</h2>
+
+@if (Model.KayitFisNo is not null)
+{
+    <div id="ctl00_cph_lblSonuc" class="ok">Kayıt başarılı. Fiş No: <b>@Model.KayitFisNo</b></div>
+}
+@if (Model.Hatalar.Count > 0)
+{
+    <div id="ctl00_cph_lblHata" class="err">
+        @foreach (var h in Model.Hatalar) { <div>• @h</div> }
+    </div>
+}
+
+<form method="post" id="aspnetForm">
+    <fieldset>
+        <legend>Fiş Bilgileri</legend>
+        <table class="form">
+            <tr>
+                <td class="lbl"><label for="ctl00_cph_txtFisTarihi">Fiş Tarihi (gg.aa.yyyy): <span class="req">*</span></label></td>
+                <td><input type="text" id="ctl00_cph_txtFisTarihi" name="ctl00$cph$txtFisTarihi" value="@Model.FisTarihi" maxlength="10" size="12" /></td>
+                <td class="lbl"><label for="ctl00_cph_txtIrsaliyeNo">İrsaliye No: <span class="req">*</span></label></td>
+                <td><input type="text" id="ctl00_cph_txtIrsaliyeNo" name="ctl00$cph$txtIrsaliyeNo" value="@Model.IrsaliyeNo" maxlength="30" /></td>
+            </tr>
+            <tr>
+                <td class="lbl"><label for="ctl00_cph_ddlDepo">Depo: <span class="req">*</span></label></td>
+                <td>
+                    <select id="ctl00_cph_ddlDepo" name="ctl00$cph$ddlDepo">
+                        <option value="">-- Seçiniz --</option>
+                        @foreach (var d in LegacyCatalog.Depots)
+                        {
+                            <option value="@d.Key" selected="@(Model.Depo == d.Key)">@d.Value.Name</option>
+                        }
+                    </select>
+                </td>
+                <td class="lbl"><label for="ctl00_cph_ddlRaf">Raf / Lokasyon: <span class="req">*</span></label></td>
+                <td>
+                    <select id="ctl00_cph_ddlRaf" name="ctl00$cph$ddlRaf" data-secili="@Model.Raf" disabled>
+                        <option value="">-- Önce depo seçiniz --</option>
+                    </select>
+                    <img id="imgRafYukleniyor" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="" style="display:none" />
+                    <span id="lblRafDurum" class="small"></span>
+                </td>
+            </tr>
+            <tr>
+                <td class="lbl"><label for="ctl00_cph_txtTedarikci">Tedarikçi: <span class="req">*</span></label></td>
+                <td colspan="3"><input type="text" id="ctl00_cph_txtTedarikci" name="ctl00$cph$txtTedarikci" value="@Model.Tedarikci" maxlength="150" size="50" /></td>
+            </tr>
+        </table>
+    </fieldset>
+
+    <fieldset>
+        <legend>Malzeme</legend>
+        <table class="form">
+            <tr>
+                <td class="lbl"><label for="ctl00_cph_txtMalzemeKodu">Malzeme Kodu: <span class="req">*</span></label></td>
+                <td>
+                    <input type="text" id="ctl00_cph_txtMalzemeKodu" name="ctl00$cph$txtMalzemeKodu" value="@Model.MalzemeKodu" maxlength="40" />
+                    <span id="ctl00_cph_lblMalzemeHata" class="err-inline"></span>
+                </td>
+                <td class="lbl"><label for="ctl00_cph_txtMalzemeAdi">Malzeme Adı:</label></td>
+                <td><input type="text" id="ctl00_cph_txtMalzemeAdi" readonly="readonly" class="ro" size="34" /></td>
+            </tr>
+            <tr>
+                <td class="lbl"><label for="ctl00_cph_txtMiktar">Miktar: <span class="req">*</span></label></td>
+                <td><input type="text" id="ctl00_cph_txtMiktar" name="ctl00$cph$txtMiktar" value="@Model.Miktar" maxlength="15" size="10" class="num" /> <b id="ctl00_cph_lblBirim"></b></td>
+                <td class="lbl"><label for="ctl00_cph_chkKaliteKontrol">Kalite kontrol yapıldı:</label></td>
+                <td><input type="checkbox" id="ctl00_cph_chkKaliteKontrol" name="ctl00$cph$chkKaliteKontrol" value="on" @(Model.KaliteKontrol ? "checked" : "") /></td>
+            </tr>
+            <tr>
+                <td class="lbl"><label for="ctl00_cph_txtAciklama">Açıklama:</label></td>
+                <td colspan="3"><textarea id="ctl00_cph_txtAciklama" name="ctl00$cph$txtAciklama" rows="2" cols="60" maxlength="500">@Model.Aciklama</textarea></td>
+            </tr>
+        </table>
+    </fieldset>
+
+    <div class="buttons">
+        <input type="button" id="ctl00_cph_btnKaydet" value="Kaydet" class="btn btn-save" />
+        <input type="reset" id="ctl00_cph_btnTemizle" value="Temizle" class="btn" />
+    </div>
+</form>
+
+@section Scripts {
+    <script src="~/js/ambar.js"></script>
+}

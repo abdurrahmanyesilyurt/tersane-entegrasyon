@@ -1,0 +1,25 @@
+@page "/FisListesi.aspx"
+@model FisListesiModel
+@{
+    ViewData["Title"] = "Fiş Listesi";
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+}
+<h2 class="page-title">AMBAR GİRİŞ FİŞLERİ (son 200)</h2>
+<table class="grid" id="ctl00_cph_gvFisler" cellspacing="0" border="1">
+    <tr class="grid-head">
+        <th>Fiş No</th><th>Tarih</th><th>Depo</th><th>Raf</th><th>Malzeme</th><th>Miktar</th><th>Tedarikçi</th><th>İrsaliye</th><th>KK</th><th>Kullanıcı</th>
+    </tr>
+    @{ var i = 0; }
+    @foreach (var f in Model.Fisler)
+    {
+        <tr class="@(i++ % 2 == 0 ? "row" : "alt")">
+            <td>@f.FisNo</td><td>@f.FisTarihi.ToString("dd.MM.yyyy", tr)</td><td>@f.Depo</td><td>@f.Raf</td><td>@f.MalzemeKodu</td>
+            <td class="num">@f.Miktar.ToString("#,0.###", tr) @f.Birim</td><td>@f.Tedarikci</td><td>@f.IrsaliyeNo</td>
+            <td>@(f.KaliteKontrol ? "E" : "H")</td><td>@f.Kullanici</td>
+        </tr>
+    }
+    @if (Model.Fisler.Count == 0)
+    {
+        <tr><td colspan="10">Kayıt bulunamadı.</td></tr>
+    }
+</table>

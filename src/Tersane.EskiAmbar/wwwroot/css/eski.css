@@ -1,0 +1,37 @@
+/* Bilerek eski görünüm: tablo düzeni, Verdana 11px, gri degrade. */
+body { margin: 0; background: #d4d0c8; font: 11px Verdana, Tahoma, sans-serif; color: #000; }
+a { color: #003399; }
+.shell { width: 980px; margin: 8px auto; background: #fff; border: 1px solid #808080; }
+.header { background: linear-gradient(#3a6ea5, #1c4a7a); color: #fff; padding: 8px 10px; font-size: 13px; }
+.header .logo { background: #ffcc00; color: #1c4a7a; font-weight: bold; padding: 2px 6px; margin-right: 8px; border: 1px solid #fff; }
+.header .user { float: right; font-size: 11px; }
+.header .user a { color: #ffcc00; }
+.header .small, .small { font-size: 10px; }
+.menu { width: 170px; vertical-align: top; background: #ece9d8; border-right: 1px solid #a0a0a0; padding: 6px; }
+.menu-title { font-weight: bold; background: #808080; color: #fff; padding: 3px; margin-bottom: 4px; }
+.menu a, .menu .disabled { display: block; padding: 3px 2px; text-decoration: none; }
+.menu .disabled { color: #999; }
+.body { vertical-align: top; padding: 10px 14px; height: 420px; }
+.footer { background: #ece9d8; border-top: 1px solid #a0a0a0; padding: 4px 8px; font-size: 10px; color: #555; text-align: center; }
+.page-title { font-size: 14px; color: #1c4a7a; border-bottom: 2px solid #1c4a7a; padding-bottom: 3px; margin: 0 0 10px; }
+fieldset { border: 1px solid #a0a0a0; margin: 0 0 10px; padding: 6px 8px; }
+legend { font-weight: bold; color: #1c4a7a; }
+table.form td { padding: 3px 4px; }
+td.lbl { text-align: right; white-space: nowrap; font-weight: bold; }
+input[type=text], input[type=password], select, textarea { font: 11px Verdana, sans-serif; border: 1px solid #7f9db9; padding: 2px; }
+input.ro { background: #f0f0f0; color: #333; }
+input.num { text-align: right; }
+.req { color: #c00; }
+.btn { font: bold 11px Verdana, sans-serif; padding: 3px 14px; border: 1px solid #003c74; background: linear-gradient(#fff, #d6d3ce); cursor: pointer; }
+.btn-save { color: #003c74; }
+.buttons { text-align: right; }
+.ok { background: #e7f7e7; border: 1px solid #3c9a3c; color: #1e6b1e; padding: 6px; margin-bottom: 8px; }
+.err { background: #ffecec; border: 1px solid #c00; color: #c00; padding: 6px; margin-bottom: 8px; }
+.warn { background: #fff8d8; border: 1px solid #c90; color: #7a5a00; padding: 6px; margin-top: 8px; }
+.err-inline { color: #c00; font-weight: bold; }
+.login { width: 360px; margin: 40px auto; }
+table.grid { border-collapse: collapse; width: 100%; border-color: #a0a0a0; }
+table.grid th { background: #1c4a7a; color: #fff; padding: 3px; }
+table.grid td { padding: 2px 4px; }
+table.grid tr.alt { background: #eef3fa; }
+table.grid td.num { text-align: right; }
