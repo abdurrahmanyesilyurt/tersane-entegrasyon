@@ -1,0 +1,110 @@
+# Tersane entegrasyon demo — tüm sistem:  docker compose up -d --build
+#   İç uygulama (MVC) ........ http://localhost:5100
+#   Sahte ERP (mock, OData) .. http://localhost:5101
+#   Eski ambar formu ......... http://localhost:5102   (kullanıcı: rpa.bot / Demo-Bot-2026)
+#   SQL Server ............... localhost,14333          (sa / MSSQL_SA_PASSWORD)
+# RPA botu (isteğe bağlı profil):  docker compose --profile rpa run --rm rpa
+#
+# Parolalar demo değerleridir; .env dosyasıyla değiştirilebilir (MSSQL_SA_PASSWORD, ERP_CLIENT_SECRET).
+
+name: tersane
+
+x-db: &db "Server=sqlserver;Database=Tersane;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Tersane_Demo_2026!};TrustServerCertificate=true"
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Tersane_Demo_2026!}
+    ports:
+      - "14333:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  # One-shot: EF Core migrations (tables + T-SQL procedures/views) and demo data, then exits.
+  db-migrate:
+    image: tersane/web:dev
+    build:
+      context: .
+      args: { APP: Web }
+    command: ["--migrate"]
+    environment:
+      ConnectionStrings__Tersane: *db
+    depends_on:
+      sqlserver: { condition: service_healthy }
+
+  erp-mock:
+    image: tersane/erp-mock:dev
+    build:
+      context: .
+      args: { APP: ErpMock }
+    environment:
+      Auth__ClientSecret: ${ERP_CLIENT_SECRET:-mock-erp-demo-secret}
+      Simulation__AutoAuthorizeSeconds: "20"
+      Simulation__AutoCloseSeconds: "40"
+    ports:
+      - "5101:8080"
+
+  worker:
+    image: tersane/worker:dev
+    build:
+      context: .
+      args: { APP: Worker }
+    environment:
+      ConnectionStrings__Tersane: *db
+      Erp__BaseUrl: http://erp-mock:8080/
+      Erp__ClientSecret: ${ERP_CLIENT_SECRET:-mock-erp-demo-secret}
+    depends_on:
+      db-migrate: { condition: service_completed_successfully }
+      erp-mock: { condition: service_started }
+    restart: unless-stopped
+
+  web:
+    image: tersane/web:dev
+    environment:
+      ConnectionStrings__Tersane: *db
+      ErpMock__BaseUrl: http://erp-mock:8080/
+      ErpMock__PublicUrl: http://localhost:5101/
+    ports:
+      - "5100:8080"
+    depends_on:
+      db-migrate: { condition: service_completed_successfully }
+    restart: unless-stopped
+
+  eski-ambar:
+    image: tersane/eski-ambar:dev
+    build:
+      context: .
+      args: { APP: EskiAmbar }
+    environment:
+      ConnectionStrings__EskiAmbar: "Server=sqlserver;Database=EskiAmbar;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Tersane_Demo_2026!};TrustServerCertificate=true"
+    ports:
+      - "5102:8080"
+    depends_on:
+      sqlserver: { condition: service_healthy }
+    restart: unless-stopped
+
+  rpa:
+    profiles: ["rpa"]
+    image: tersane/rpa:dev
+    build:
+      context: .
+      dockerfile: src/Tersane.Rpa/Dockerfile
+    environment:
+      ESKIAMBAR_URL: http://eski-ambar:8080
+    command: ["--excel", "samples/ornek-irsaliye.xlsx", "--out", "rpa-out", "--trace"]
+    volumes:
+      - ./rpa-out:/app/rpa-out
+    depends_on:
+      eski-ambar: { condition: service_started }
+
+volumes:
+  sqldata:

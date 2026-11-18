@@ -62,7 +62,7 @@
                 <tr class="@(m.Status == OutboxStatus.Failed ? "row-err" : "")">
                     <td class="mono">@Ui.Local(m.CreatedAt, "dd.MM HH:mm:ss")</td>
                     <td class="mono">@m.MessageType</td>
-                    <td class="mono">@m.IdempotencyKey</td>
+                    <td class="small mono-wrap">@m.IdempotencyKey</td>
                     <td class="js-status">@Html.Pill(Ui.Status(m.Status))</td>
                     <td class="num">@m.AttemptCount / @m.MaxAttempts</td>
                     <td class="mono">@(m.Status == OutboxStatus.Pending ? Ui.Local(m.NextAttemptAt, "HH:mm:ss") : "—")</td>
@@ -110,7 +110,7 @@
             {
                 <tr>
                     <td class="mono">@s.Name</td>
-                    <td class="mono small">@Ui.Local(s.Watermark, "dd.MM HH:mm:ss")</td>
+                    <td class="mono small">@Ui.Local(s.Watermark, "HH:mm:ss")</td>
                     <td>@if (s.LastError is null) { <span class="pill st-ok">@Ui.Ago(s.LastSuccessAt)</span> } else { <span class="pill st-err" title="@s.LastError">hata</span><div class="small text-danger">@s.LastError</div> }</td>
                 </tr>
             }

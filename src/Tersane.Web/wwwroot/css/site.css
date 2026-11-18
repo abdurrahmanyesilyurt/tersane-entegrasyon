@@ -40,6 +40,8 @@ body {
     display: grid;
     grid-template-columns: var(--sidebar-w) 1fr;
     min-height: 100vh;
+    /* the sidebar column keeps its colour below the sticky panel on long pages */
+    background: linear-gradient(to right, var(--navy-900) var(--sidebar-w), var(--paper) var(--sidebar-w));
 }
 
 .sidebar {
@@ -192,6 +194,8 @@ body {
 .table-x tbody tr:last-child td { border-bottom: 0; }
 .table-x .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .table-x .mono, .mono { font-family: "Cascadia Mono", Consolas, monospace; font-size: .85em; }
+.table-x td.mono { white-space: nowrap; }
+.mono-wrap { font-family: "Cascadia Mono", Consolas, monospace; word-break: break-all; }
 .table-x tr.row-err td { background: #fff8f7; }
 .table-x tr.flash td { animation: flash 1.6s ease-out; }
 .table-wrap { overflow: auto; max-height: 560px; border-radius: 8px; }
@@ -278,7 +282,7 @@ pre.payload { background: #0f1b28; color: #d6e2ee; border-radius: 8px; padding: 
 
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 900px) {
-    .app { grid-template-columns: 1fr; }
+    .app { grid-template-columns: 1fr; background: var(--paper); }
     .sidebar { position: static; height: auto; }
     .nav-side { flex-direction: row; flex-wrap: wrap; }
     .sidebar-foot { display: none; }

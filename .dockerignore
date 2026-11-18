@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+**/node_modules/
+.git/
+.vs/
+.claude/
+rpa-out/
+TestResults/
+docs/
+tests/
+*.md
