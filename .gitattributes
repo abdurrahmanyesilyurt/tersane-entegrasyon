@@ -6,3 +6,4 @@
 *.pkb text eol=lf
 *.xlsx binary
 *.png binary
+Dockerfile text eol=lf
