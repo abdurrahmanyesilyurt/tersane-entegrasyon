@@ -1,0 +1,16 @@
+bin/
+obj/
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+TestResults/
+# RPA çıktıları (ekran görüntüleri, sonuç Excel'i, trace)
+rpa-out/
+src/Tersane.Rpa/out/
+# React panel
+node_modules/
+src/tersane-panel/dist/
+.env
+.claude/

@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Tersane.Data/Tersane.Data.csproj" />
+    <Project Path="src/Tersane.ErpMock/Tersane.ErpMock.csproj" />
+    <Project Path="src/Tersane.EskiAmbar/Tersane.EskiAmbar.csproj" />
+    <Project Path="src/Tersane.Rpa/Tersane.Rpa.csproj" />
+    <Project Path="src/Tersane.Web/Tersane.Web.csproj" />
+    <Project Path="src/Tersane.Worker/Tersane.Worker.csproj" />
+  </Folder>
+</Solution>

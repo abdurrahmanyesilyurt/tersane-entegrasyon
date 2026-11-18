@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- T-SQL programmability (procedures, views, types, functions) lives in plain .sql files
+         and is applied by a migration, so DBAs can review it as SQL. -->
+    <EmbeddedResource Include="Sql\*.sql" LogicalName="Tersane.Data.Sql.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>
