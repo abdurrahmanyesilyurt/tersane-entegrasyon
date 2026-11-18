@@ -41,11 +41,14 @@ status=$(curl -sS -b "$JAR" -o /dev/null -w '%{http_code}' -X POST "$WEB/malzeme
 [ "$status" = "302" ] || { echo "✗ form post returned $status"; exit 1; }
 
 echo "→ waiting for the worker to deliver it to the ERP"
+# The API lists the newest message first: that is the one this script just created.
 for _ in $(seq 1 30); do
   messages=$(curl -fsS "$WEB/api/entegrasyon/mesajlar")
-  if echo "$messages" | grep -q '"status":"Processed"'; then
-    erp=$(echo "$messages" | grep -o '"externalRef":"PR[0-9-]*"' | head -1)
-    echo "  ✓ outbox message processed, ERP requisition $erp"
+  newest=${messages%%"},{"*}   # text up to the end of the first JSON object
+  if echo "$newest" | grep -q '"status":"Processed"'; then
+    key=$(echo "$newest" | grep -o '"idempotencyKey":"[^"]*"')
+    erp=$(echo "$newest" | grep -o '"externalRef":"[^"]*"')
+    echo "  ✓ $key processed → $erp"
     echo "✓ smoke test passed"
     exit 0
   fi

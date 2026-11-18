@@ -156,8 +156,10 @@ public sealed class ErpStore
             _parts.Clear();
             _stock.Clear();
             _requisitions.Clear();
-            _requisitionSeq = 0;
             var now = NextStamp();
+            // The mock keeps its data in memory. Starting the numbering from the clock (minutes) means a restarted
+            // mock never hands out a requisition number that the internal system has already stored.
+            _requisitionSeq = (int)(now.ToUnixTimeSeconds() / 60 % 89_000) + 10_000;
 
             foreach (var (partNo, description, unit, category, safety, status) in SeedParts)
                 _parts[partNo] = new InventoryPart

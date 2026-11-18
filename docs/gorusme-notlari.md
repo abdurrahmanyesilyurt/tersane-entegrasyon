@@ -16,7 +16,9 @@ docker compose up -d
 - RPA'yı göstereceksen bir kez önceden çalıştır (imaj hazır olsun): `docker compose --profile rpa run --rm rpa`.
 - React paneli ve PL/SQL örneği isteğe bağlı: `docker compose --profile panel up -d panel` (`localhost:5104`),
   `docker compose --profile oracle up -d oracle` (Oracle ilk açılışta testleri çalıştırır, ~1 dk).
-- Görüşmeden sonra: `docker compose --profile rpa down` (veriyi de silmek için `-v`).
+- Veriler (SQL Server volume'u) korunur. Sahte ERP ise belleğinde tutar; yeniden başlayınca ERP tarafı sıfırlanır, numaraları
+  çakışmaz. Tamamen temiz başlamak istersen: `docker compose --profile rpa down -v` ve ardından `docker compose up -d`.
+- Görüşmeden sonra: `docker compose --profile rpa --profile oracle --profile panel stop`.
 
 ## 1. 30 saniyelik açılış
 
@@ -148,7 +150,10 @@ Uygulama 50000 üstü numaraları iş kuralı mesajı olarak gösteriyor.
 `QUOTED_IDENTIFIER OFF` çalışıyor. Filtreli index'i olan tabloya o oturumda UPDATE atılamadı; `-I` gerekti. Eski betiklerin
 neden patladığını açıklar. (3) Kaos ekranında `0.3` değeri tr-TR kültüründe 3 olarak okunuyordu, çünkü nokta binlik
 ayırıcı. Değeri yüzde olarak tam sayı taşıdım. Türkçe ortamda "i".ToUpper() = "İ" sorunu için de kodları `ToUpperInvariant`
-ile normalize ediyorum.
+ile normalize ediyorum. (4) RPA botu her satırda tekrar giriş yapmaya çalışıyordu: `"/AmbarGiris.aspx"` adresi de
+`"Giris.aspx"` ile bitiyor. URL'yi `Contains` yerine tam yol karşılaştırmasıyla kontrol ettim. Ekran görüntüsü olmasaydı
+bulmak zor olurdu. (5) React paneli Alpine imajında derlenmedi ("nested too deeply"). Rollup'ın yerel ayrıştırıcısı
+musl'ün küçük thread stack'ine takılıyor, derleme aşamasını glibc tabanlı `node:22-slim`'e aldım.
 
 **RPA botu neden kırılmıyor?**
 Sabit `Sleep` yok. Bot belirli bir durumu bekliyor: raf seçeneği yüklendi mi, malzeme sorgusu bitti mi, sonuç etiketi çıktı mı.
