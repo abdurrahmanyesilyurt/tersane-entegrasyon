@@ -1,5 +1,7 @@
 # Tersane Entegrasyon
 
+[![ci](https://github.com/abdurrahmanyesilyurt/tersane-entegrasyon/actions/workflows/ci.yml/badge.svg)](https://github.com/abdurrahmanyesilyurt/tersane-entegrasyon/actions/workflows/ci.yml)
+
 **Tersane iç uygulaması + ERP entegrasyonu + RPA botu: uçtan uca çalışan bir .NET vitrin projesi.**
 Üretim planlama ekibi bir gemi projesi (tekne no), blok ve iş emri için malzeme talebi açar. Talep ERP'de satınalma
 talebine dönüşür. ERP'deki onay, mal kabul ve stok bilgisi iç sisteme geri akar. API'si olmayan eski bir ambar
